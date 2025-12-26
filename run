@@ -1,0 +1,151 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [ ! -f .env ]; then
+    echo "Файл .env не найден. Создайте .env перед запуском (например, скопируйте .env.example)."
+    exit 1
+fi
+
+set_env_var() {
+    local key="$1"
+    local value="$2"
+
+    if grep -q "^${key}=" .env 2>/dev/null; then
+        # macOS требует -i '' для sed
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s#^${key}=.*#${key}=${value}#" .env
+        else
+            sed -i "s#^${key}=.*#${key}=${value}#" .env
+        fi
+        return
+    fi
+
+    echo "${key}=${value}" >> .env
+}
+
+# Очистка всех типов кэша Laravel
+echo "Очистка кэша..."
+php artisan view:clear
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+
+# Получение локального IP адреса
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
+else
+    # Linux
+    LOCAL_IP=$(hostname -I | awk '{for (i = 1; i <= NF; i++) { if ($i ~ /^[0-9]+\./) { print $i; exit } }}')
+    
+    if [ -z "$LOCAL_IP" ]; then
+        LOCAL_IP=$(ip route get 1.1.1.1 | awk '{for (i = 1; i <= NF; i++) { if ($i == "src") { print $(i+1); exit } }}')
+    fi
+fi
+
+if [ -z "$LOCAL_IP" ]; then
+    echo "Не удалось определить локальный IP адрес."
+    exit 1
+fi
+
+set_env_var "APP_URL" "http://${LOCAL_IP}:8000"
+set_env_var "VITE_HOST" "${LOCAL_IP}"
+
+echo "Локальный IP адрес: $LOCAL_IP"
+
+# Завершение всех запущенных экземпляров artisan serve
+echo "Остановка всех существующих серверов..."
+pkill -f 'php artisan serve' || true
+pkill -f 'vite' || true
+
+# Небольшая пауза для корректного завершения процессов
+sleep 2
+
+# Выбор режима запуска
+echo ""
+echo "Выберите режим запуска:"
+echo "1) Development (с Vite HMR для разработки)"
+echo "2) Production (со статическими файлами для сети)"
+echo ""
+read -p "Введите номер (1 или 2): " mode
+
+if [ "$mode" = "1" ]; then
+    echo ""
+    echo "=== DEVELOPMENT РЕЖИМ ==="
+    echo "Запуск в режиме разработки с Vite HMR..."
+    
+    # Установка development окружения
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' 's/APP_ENV=production/APP_ENV=local/' .env
+    else
+        sed -i 's/APP_ENV=production/APP_ENV=local/' .env
+    fi
+    
+    # Запуск Vite сервера в фоновом режиме
+    echo "Запуск Vite сервера..."
+    VITE_HOST="$LOCAL_IP" npm run dev -- --host="$LOCAL_IP" &
+    NPM_PID=$!
+    
+    echo "Сервер будет доступен по адресу: http://$LOCAL_IP:8000"
+    echo "Vite сервер будет доступен по адресу: http://$LOCAL_IP:5173"
+    echo "Нажмите Ctrl+C для остановки серверов"
+    
+    # Запуск Laravel сервера
+    php artisan serve --host=0.0.0.0 --port=8000
+
+# Убийство процесса npm при выходе
+    echo "Остановка Vite сервера..."
+    kill $NPM_PID 2>/dev/null || true
+    
+elif [ "$mode" = "2" ]; then
+    echo ""
+    echo "=== PRODUCTION РЕЖИМ ==="
+    echo "Запуск в production режиме со статическими файлами..."
+    
+    # Установка production окружения
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' 's/APP_ENV=local/APP_ENV=production/' .env
+    else
+        sed -i 's/APP_ENV=local/APP_ENV=production/' .env
+    fi
+    
+    # Сборка статических файлов
+    echo "Сборка статических файлов..."
+    npm run build
+    
+    # Очистка кэша после изменения окружения
+    php artisan config:clear
+    php artisan cache:clear
+    
+    echo "Сервер будет доступен по адресу: http://$LOCAL_IP:8000"
+    echo "Статические файлы собраны и готовы для работы в сети"
+    echo "Нажмите Ctrl+C для остановки сервера"
+    
+    # Запуск только Laravel сервера
+    php artisan serve --host=0.0.0.0 --port=8000
+    
+else
+    echo "Неверный выбор. Запуск в production режиме по умолчанию..."
+    
+    # Установка production окружения
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' 's/APP_ENV=local/APP_ENV=production/' .env
+    else
+        sed -i 's/APP_ENV=local/APP_ENV=production/' .env
+    fi
+    
+    # Сборка статических файлов
+    echo "Сборка статических файлов..."
+    npm run build
+    
+    # Очистка кэша
+    php artisan config:clear
+    php artisan cache:clear
+    
+    echo "Сервер будет доступен по адресу: http://$LOCAL_IP:8000"
+    echo "Нажмите Ctrl+C для остановки сервера"
+    
+    # Запуск только Laravel сервера
+    php artisan serve --host=0.0.0.0 --port=8000
+fi 
