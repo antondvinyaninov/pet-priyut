@@ -22,6 +22,9 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Устанавливаем PHP расширения
 RUN docker-php-ext-install pdo pdo_sqlite mbstring exif pcntl bcmath gd zip
 
+# Копируем custom PHP конфигурацию
+COPY docker/php.ini /usr/local/etc/php/conf.d/uploads.ini
+
 # Включаем Apache mod_rewrite
 RUN a2enmod rewrite
 
