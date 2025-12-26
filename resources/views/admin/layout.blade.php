@@ -365,44 +365,44 @@
             // Проверяем, находимся ли мы в разделе ОСВВ
             if (currentUrl.includes('/admin/osvv')) {
                 const osvvSubmenu = document.getElementById('osvvSubmenu');
-                const chevron = osvvSubmenu.previousElementSibling.querySelector('.submenu-chevron');
                 
                 if (osvvSubmenu) {
+                    const chevron = osvvSubmenu.previousElementSibling?.querySelector('.submenu-chevron');
                     osvvSubmenu.classList.remove('hidden');
-                    chevron.classList.add('rotate-180');
+                    if (chevron) chevron.classList.add('rotate-180');
                 }
             }
 
             // Проверяем, находимся ли мы в разделе задач
             if (currentUrl.includes('/admin/tasks')) {
                 const tasksSubmenu = document.getElementById('tasksSubmenu');
-                const chevron = tasksSubmenu.previousElementSibling.querySelector('.submenu-chevron');
                 
                 if (tasksSubmenu) {
+                    const chevron = tasksSubmenu.previousElementSibling?.querySelector('.submenu-chevron');
                     tasksSubmenu.classList.remove('hidden');
-                    chevron.classList.add('rotate-180');
+                    if (chevron) chevron.classList.add('rotate-180');
                 }
             }
             
             // Проверяем, находимся ли мы в разделе управления пользователями/ролями
             if (currentUrl.includes('/admin/users') || currentUrl.includes('/admin/roles')) {
                 const usersSubmenu = document.getElementById('usersSubmenu');
-                const chevron = usersSubmenu.previousElementSibling.querySelector('.submenu-chevron');
                 
                 if (usersSubmenu) {
+                    const chevron = usersSubmenu.previousElementSibling?.querySelector('.submenu-chevron');
                     usersSubmenu.classList.remove('hidden');
-                    chevron.classList.add('rotate-180');
+                    if (chevron) chevron.classList.add('rotate-180');
                 }
             }
             
             // Проверяем, находимся ли мы в разделе учета животных или актов приема-передачи
             if (currentUrl.includes('/admin/animal-registry') || currentUrl.includes('/admin/animal-transfer-acts')) {
                 const animalRegistrySubmenu = document.getElementById('animalRegistrySubmenu');
-                const chevron = animalRegistrySubmenu.previousElementSibling.querySelector('.submenu-chevron');
                 
                 if (animalRegistrySubmenu) {
+                    const chevron = animalRegistrySubmenu.previousElementSibling?.querySelector('.submenu-chevron');
                     animalRegistrySubmenu.classList.remove('hidden');
-                    chevron.classList.add('rotate-180');
+                    if (chevron) chevron.classList.add('rotate-180');
                 }
             }
         });
