@@ -31,14 +31,26 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Устанавливаем рабочую директорию
 WORKDIR /var/www/html
 
-# Копируем файлы проекта
-COPY . .
+# Копируем composer файлы
+COPY composer.json composer.lock ./
 
 # Устанавливаем зависимости Composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Устанавливаем зависимости NPM и собираем фронтенд
-RUN npm ci && npm run build
+# Копируем package файлы
+COPY package*.json ./
+
+# Устанавливаем зависимости NPM
+RUN npm ci
+
+# Копируем все файлы проекта
+COPY . .
+
+# Собираем фронтенд
+RUN npm run build
+
+# Завершаем установку Composer (запускаем скрипты)
+RUN composer dump-autoload --optimize
 
 # Создаем директорию для SQLite базы данных
 RUN mkdir -p /var/www/html/database && \
