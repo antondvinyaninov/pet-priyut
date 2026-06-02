@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    libpq-dev \
     zip \
     unzip \
+    postgresql-client \
     sqlite3 \
     libsqlite3-dev \
     nodejs \
@@ -20,7 +22,7 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем PHP расширения
-RUN docker-php-ext-install pdo pdo_sqlite mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-install pdo pdo_sqlite pdo_pgsql mbstring exif pcntl bcmath gd zip
 
 # Копируем custom PHP конфигурацию
 COPY docker/php.ini /usr/local/etc/php/conf.d/uploads.ini
