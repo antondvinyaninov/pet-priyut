@@ -146,13 +146,12 @@
                         <tr class="hover:bg-indigo-50">
                             <!-- № карточки -->
                             <td class="px-3 py-3 text-sm whitespace-nowrap font-mono">
-                                @if($animal->registrationCard)
-                                    <a href="{{ route('admin.animals.show', $animal) }}" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:underline">
-                                        {{ $animal->registrationCard->registration_number }}
-                                    </a>
-                                @else
-                                    <a href="{{ route('admin.animals.show', $animal) }}" class="text-gray-400 hover:underline">—</a>
-                                @endif
+                                @php
+                                    $cardNumber = $animal->registrationCard?->registration_number ?: $animal->id;
+                                @endphp
+                                <a href="{{ route('admin.animals.show', $animal) }}" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:underline">
+                                    {{ $cardNumber }}
+                                </a>
                             </td>
                             <!-- Фото -->
                             <td class="px-3 py-3">

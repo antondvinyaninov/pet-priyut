@@ -232,14 +232,14 @@ class AnimalRegistryController extends Controller
         
         // Если сортировка по номеру карточки
         if ($sortBy === 'registration_number' || $sortBy === 'card_number') {
-            // Сортировка с учетом ведущих нулей: сначала 0001, 0002, потом 1, 2, 3
+            // Most animals imported from the old database do not have a separate
+            // registration card row. In that case their visible card number is
+            // the animal id from the source database.
             $query->leftJoin('animal_registration_cards', 'animals.id', '=', 'animal_registration_cards.animal_id')
-                  ->orderByRaw("
-                      CASE 
-                          WHEN substr(animal_registration_cards.registration_number, 1, 1) = '0' THEN 0
-                          ELSE 1
-                      END " . ($sortDirection === 'asc' ? 'ASC' : 'DESC') . ",
-                      CAST(animal_registration_cards.registration_number AS INTEGER) " . ($sortDirection === 'asc' ? 'ASC' : 'DESC'))
+                  ->orderByRaw(
+                      "COALESCE(CAST(NULLIF(animal_registration_cards.registration_number, '') AS INTEGER), animals.id) "
+                      . ($sortDirection === 'asc' ? 'ASC' : 'DESC')
+                  )
                   ->select('animals.*');
         } else {
             $query->orderBy($sortBy, $sortDirection);
