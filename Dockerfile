@@ -71,6 +71,10 @@ RUN chmod -R 775 /var/www/html/storage \
 # Создаем символическую ссылку для storage
 RUN php artisan storage:link || true
 
+# Добавляем entrypoint для миграций и подготовки runtime-директорий
+COPY docker/entrypoint.sh /usr/local/bin/pet-priyut-entrypoint
+RUN chmod +x /usr/local/bin/pet-priyut-entrypoint
+
 # Настраиваем Apache для Laravel
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
@@ -85,4 +89,5 @@ RUN echo '<Directory /var/www/html/public>\n\
 EXPOSE 80
 
 # Запускаем Apache
+ENTRYPOINT ["pet-priyut-entrypoint"]
 CMD ["apache2-foreground"]
